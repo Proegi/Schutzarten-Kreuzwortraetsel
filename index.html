@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Schutzarten im Kreuzworträtsel</title>
+<style>
+:root{
+  --blau:#004993;
+  --blau-2:#1D4E9E;
+  --blau-hell:#D4EAFA;
+  --blau-blass:#EDF4FC;
+  --orange:#F39100;
+  --gruen:#2E7D32;
+  --gruen-hell:#E3F2E4;
+  --rot:#C62828;
+  --rot-hell:#FBE7E7;
+  --ink:#202020;
+  --ink-2:#545454;
+  --ink-3:#8A8A8A;
+  --line:#DADADA;
+  --line-2:#E8E8E8;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:#F4F5F6;color:var(--ink);
+  font-family:var(--sans);font-size:15.5px;line-height:1.55;
+  padding:24px 16px 64px;
+}
+.sheet{max-width:880px;margin:0 auto}
+
+.notice{
+  background:#FFF6E8;border:1px solid var(--orange);border-left:5px solid var(--orange);
+  padding:11px 16px;margin:0 0 20px;font-size:13.5px;line-height:1.55;color:var(--ink-2);
+}
+.notice b{color:var(--ink)}
+
+.tools{margin-top:28px}
+button{
+  font-family:inherit;font-size:14px;font-weight:600;
+  background:var(--blau);color:#fff;border:1px solid var(--blau);
+  padding:11px 22px;cursor:pointer;
+}
+button:hover{background:#003A78;border-color:#003A78}
+button:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+
+.head{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.head-bar{
+  background:var(--orange);color:#fff;padding:7px 20px;font-size:13px;font-weight:600;letter-spacing:.02em;
+  display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;
+}
+.head-body{background:var(--blau);color:#fff;padding:22px 20px 20px}
+h1{font-size:clamp(22px,3.4vw,30px);font-weight:700;line-height:1.15;margin:0 0 6px}
+.subtitle{margin:0;font-size:16px;color:#C9DCF0}
+.head-note{background:#fff;padding:16px 20px 18px;border-top:1px solid var(--line)}
+.head-note p{margin:0 0 8px;max-width:64ch}
+.head-note p:last-child{margin-bottom:0}
+
+.task{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.task-bar{background:var(--blau);color:#fff;padding:9px 20px;display:flex;gap:14px;align-items:baseline}
+.task-bar .num{font-size:13px;font-weight:700;color:var(--orange);flex:0 0 auto}
+.task-bar h2{font-size:15px;font-weight:600;margin:0;letter-spacing:.01em}
+.task-body{padding:18px 20px 20px}
+.task-body p{margin:0 0 12px;max-width:66ch}
+
+/* Gitter */
+.grid-wrap{overflow-x:auto;padding-bottom:4px}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(22,minmax(0,1fr));
+  width:100%;min-width:calc(22 * 27px);
+  gap:0;
+}
+.blank{aspect-ratio:1}
+.cell{
+  position:relative;aspect-ratio:1;
+  border:1px solid var(--ink-3);margin:0 -1px -1px 0;
+  background:#fff;
+}
+.cell .cn{
+  position:absolute;top:1px;left:2px;
+  font-size:9px;line-height:1;color:var(--ink-2);pointer-events:none;
+}
+.cell input{
+  width:100%;height:100%;border:0;margin:0;padding:6px 0 0;
+  background:transparent;text-align:center;
+  font-family:inherit;font-weight:600;font-size:clamp(11px,2vw,17px);
+  text-transform:uppercase;color:var(--ink);caret-color:transparent;
+  border-radius:0;
+}
+.cell input:focus{outline:none}
+.cell .sn{
+  position:absolute;right:2px;bottom:1px;
+  font-size:8.5px;line-height:1;font-weight:700;color:var(--orange);pointer-events:none;
+}
+.cell.sol::after{
+  content:"";position:absolute;inset:4px 3px 3px 4px;border:2px solid var(--orange);border-radius:50%;pointer-events:none;
+}
+.cell.word{background:var(--blau-blass)}
+.cell.cur{background:var(--blau-hell);box-shadow:inset 0 0 0 2px var(--blau)}
+.cell.ok{background:var(--gruen-hell)}
+.cell.bad{background:var(--rot-hell)}
+.cell.ok.word,.cell.bad.word{box-shadow:inset 0 0 0 1px var(--blau)}
+
+/* Lösungswort */
+.solution{margin-top:22px}
+.solution h3{
+  font-size:14px;font-weight:700;color:var(--blau);margin:0 0 8px;
+  padding-bottom:4px;border-bottom:2px solid var(--blau);
+}
+.srow{display:flex;flex-wrap:wrap;gap:12px 18px}
+.sgroup{display:flex;flex-wrap:wrap}
+.sbox{
+  position:relative;width:30px;height:34px;border:1px solid var(--ink-3);margin:0 -1px 0 0;
+  display:inline-flex;align-items:flex-end;justify-content:center;background:#fff;
+}
+.sbn{position:absolute;top:1px;left:2px;font-size:8.5px;line-height:1;color:var(--orange);font-weight:700}
+.sbl{font-weight:700;font-size:16px;line-height:1;padding-bottom:6px}
+.solution.done .sbox{background:var(--gruen-hell)}
+
+/* Hinweise */
+.clues{display:grid;grid-template-columns:1fr 1fr;gap:8px 28px;margin-top:22px}
+.clues h3{
+  font-size:14px;font-weight:700;color:var(--blau);margin:0 0 6px;
+  padding-bottom:4px;border-bottom:2px solid var(--blau);
+}
+.clues ol{list-style:none;margin:0;padding:0}
+.clues li{
+  display:flex;gap:10px;padding:5px 6px;font-size:14px;line-height:1.45;
+  cursor:pointer;border-bottom:1px solid var(--line-2);
+}
+.clues li:hover{background:#FAFAFA}
+.clues li.act{background:var(--blau-hell)}
+.clues li.ok .ln{background:var(--gruen);border-color:var(--gruen);color:#fff}
+.clues li.bad .ln{background:var(--rot);border-color:var(--rot);color:#fff}
+.clues .ln{
+  flex:0 0 26px;height:22px;display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid var(--blau);color:var(--blau);font-weight:700;font-size:12.5px;
+}
+.clues .len{color:var(--ink-3);white-space:nowrap}
+
+.check-row{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:22px}
+.status{font-size:14px;color:var(--ink-2)}
+.status.done{color:var(--gruen);font-weight:600}
+.status.warn{color:var(--rot)}
+
+@media print{
+  @page{size:A4 portrait;margin:12mm 12mm 14mm}
+  body{background:#fff;padding:0;font-size:10pt;line-height:1.38}
+  .sheet{max-width:none}
+  .notice,.tools,.check-row{display:none}
+  .head{margin-bottom:10px}
+  .head-bar,.head-body,.task-bar,.cell.ok,.cell.bad,.clues .ln{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .subtitle{color:#DCE8F5}
+  h1{font-size:20pt}
+  .head-body{padding:14px 16px 12px}
+  .grid-wrap{overflow:visible}
+  .grid{min-width:0;break-inside:avoid;page-break-inside:avoid}
+  .cell.word,.cell.cur{background:#fff;box-shadow:none}
+  .cell input{font-size:11pt;padding-top:3px}
+  .clues{break-before:auto}
+  .cell.sol::after,.sbn,.cell .sn{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .clues li{font-size:9.5pt;padding:3px 4px;break-inside:avoid}
+  .clues li.act{background:none}
+}
+@media(max-width:620px){
+  body{padding:16px 10px 48px}
+  .head-body,.head-note,.task-body{padding:14px}
+  .clues{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <div class="head">
+    <div class="head-bar">
+      <span>Lernfeld 2 · Elektrische Betriebsmittel</span>
+      <span>Wiederholung</span>
+    </div>
+    <div class="head-body">
+      <h1>Schutzarten im Kreuzworträtsel</h1>
+      <p class="subtitle">Begriffe aus den Arbeitsaufträgen 1 bis 3</p>
+    </div>
+    <div class="head-note">
+      <p>Klicke ein Feld oder einen Hinweis an und tippe los. Ein zweiter Klick auf dasselbe Feld wechselt zwischen waagerecht und senkrecht. Mit der Tab-Taste springst du zum Anfang des nächsten Begriffs.</p>
+      <p>Schreibe Umlaute als AE, OE und UE. Jeder Buchstabe bekommt ein eigenes Feld.</p>
+      <p>Die Buchstaben in den orange umkreisten Feldern ergeben der Reihe nach das Lösungswort.</p>
+    </div>
+  </div>
+
+  <div class="notice" role="note">
+    <b>Deine Eingaben werden nicht gespeichert.</b>
+    Alles, was du hier hineinschreibst, liegt nur im Browserfenster. Sobald du die Seite neu lädst oder schließt, ist es weg. Sichere deine Antworten über die Schaltfläche am Ende des Blattes.
+  </div>
+
+  <section class="task">
+    <div class="task-bar"><span class="num">1</span><h2>Kreuzworträtsel lösen</h2></div>
+    <div class="task-body">
+      <div class="grid-wrap">
+        <div class="grid" id="grid">
+<div class="blank"></div>
+<div class="cell" data-i="1"><span class="cn">1</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 2"></div>
+<div class="cell" data-i="2"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 3"></div>
+<div class="cell" data-i="3"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 4"></div>
+<div class="cell" data-i="4"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 5"></div>
+<div class="cell sol" data-i="5"><span class="sn">1</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 6"></div>
+<div class="cell" data-i="6"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 7"></div>
+<div class="cell" data-i="7"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 8"></div>
+<div class="cell" data-i="8"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 9"></div>
+<div class="cell" data-i="9"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 10"></div>
+<div class="cell sol" data-i="10"><span class="sn">21</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 11"></div>
+<div class="cell" data-i="11"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 12"></div>
+<div class="cell" data-i="12"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 13"></div>
+<div class="cell" data-i="13"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 14"></div>
+<div class="cell sol" data-i="14"><span class="sn">15</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 15"></div>
+<div class="cell" data-i="15"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 16"></div>
+<div class="cell" data-i="16"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 17"></div>
+<div class="cell" data-i="17"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 18"></div>
+<div class="cell" data-i="18"><span class="cn">2</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 19"></div>
+<div class="cell" data-i="19"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 1 Spalte 20"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="40"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 2 Spalte 19"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="46"><span class="cn">3</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 3 Spalte 3"></div>
+<div class="blank"></div>
+<div class="cell" data-i="48"><span class="cn">4</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 3 Spalte 5"></div>
+<div class="cell" data-i="49"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 3 Spalte 6"></div>
+<div class="cell" data-i="50"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 3 Spalte 7"></div>
+<div class="cell sol" data-i="51"><span class="sn">12</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 3 Spalte 8"></div>
+<div class="cell" data-i="52"><span class="cn">5</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 3 Spalte 9"></div>
+<div class="cell" data-i="53"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 3 Spalte 10"></div>
+<div class="cell" data-i="54"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 3 Spalte 11"></div>
+<div class="cell" data-i="55"><span class="cn">6</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 3 Spalte 12"></div>
+<div class="cell" data-i="56"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 3 Spalte 13"></div>
+<div class="cell" data-i="57"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 3 Spalte 14"></div>
+<div class="cell" data-i="58"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 3 Spalte 15"></div>
+<div class="cell" data-i="59"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 3 Spalte 16"></div>
+<div class="cell" data-i="60"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 3 Spalte 17"></div>
+<div class="cell sol" data-i="61"><span class="sn">25</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 3 Spalte 18"></div>
+<div class="cell" data-i="62"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 3 Spalte 19"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell sol" data-i="68"><span class="sn">14</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 4 Spalte 3"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="74"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 4 Spalte 9"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="77"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 4 Spalte 12"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="84"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 4 Spalte 19"></div>
+<div class="blank"></div>
+<div class="cell" data-i="86"><span class="cn">7</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 4 Spalte 21"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="90"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 5 Spalte 3"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="96"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 5 Spalte 9"></div>
+<div class="blank"></div>
+<div class="cell" data-i="98"><span class="cn">8</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 5 Spalte 11"></div>
+<div class="cell" data-i="99"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 5 Spalte 12"></div>
+<div class="cell sol" data-i="100"><span class="sn">2</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 5 Spalte 13"></div>
+<div class="cell" data-i="101"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 5 Spalte 14"></div>
+<div class="cell" data-i="102"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 5 Spalte 15"></div>
+<div class="cell" data-i="103"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 5 Spalte 16"></div>
+<div class="cell" data-i="104"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 5 Spalte 17"></div>
+<div class="cell" data-i="105"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 5 Spalte 18"></div>
+<div class="cell" data-i="106"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 5 Spalte 19"></div>
+<div class="cell" data-i="107"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 5 Spalte 20"></div>
+<div class="cell" data-i="108"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 5 Spalte 21"></div>
+<div class="cell sol" data-i="109"><span class="sn">3</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 5 Spalte 22"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="112"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 6 Spalte 3"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="118"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 6 Spalte 9"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="121"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 6 Spalte 12"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="128"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 6 Spalte 19"></div>
+<div class="blank"></div>
+<div class="cell" data-i="130"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 6 Spalte 21"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="134"><span class="cn">9</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 7 Spalte 3"></div>
+<div class="cell" data-i="135"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 7 Spalte 4"></div>
+<div class="cell sol" data-i="136"><span class="sn">13</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 7 Spalte 5"></div>
+<div class="cell" data-i="137"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 7 Spalte 6"></div>
+<div class="cell" data-i="138"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 7 Spalte 7"></div>
+<div class="cell" data-i="139"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 7 Spalte 8"></div>
+<div class="cell" data-i="140"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 7 Spalte 9"></div>
+<div class="cell sol" data-i="141"><span class="sn">8</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 7 Spalte 10"></div>
+<div class="cell" data-i="142"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 7 Spalte 11"></div>
+<div class="cell" data-i="143"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 7 Spalte 12"></div>
+<div class="cell" data-i="144"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 7 Spalte 13"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="150"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 7 Spalte 19"></div>
+<div class="blank"></div>
+<div class="cell" data-i="152"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 7 Spalte 21"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="156"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 8 Spalte 3"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="162"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 8 Spalte 9"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="165"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 8 Spalte 12"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell sol" data-i="172"><span class="sn">10</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 8 Spalte 19"></div>
+<div class="blank"></div>
+<div class="cell" data-i="174"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 8 Spalte 21"></div>
+<div class="blank"></div>
+<div class="cell" data-i="176"><span class="cn">10</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 9 Spalte 1"></div>
+<div class="blank"></div>
+<div class="cell" data-i="178"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 9 Spalte 3"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="184"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 9 Spalte 9"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="187"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 9 Spalte 12"></div>
+<div class="blank"></div>
+<div class="cell" data-i="189"><span class="cn">11</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 9 Spalte 14"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="194"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 9 Spalte 19"></div>
+<div class="blank"></div>
+<div class="cell" data-i="196"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 9 Spalte 21"></div>
+<div class="blank"></div>
+<div class="cell sol" data-i="198"><span class="sn">18</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 10 Spalte 1"></div>
+<div class="blank"></div>
+<div class="cell" data-i="200"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 10 Spalte 3"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="203"><span class="cn">12</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 10 Spalte 6"></div>
+<div class="cell" data-i="204"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 10 Spalte 7"></div>
+<div class="cell sol" data-i="205"><span class="sn">9</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 10 Spalte 8"></div>
+<div class="cell" data-i="206"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 10 Spalte 9"></div>
+<div class="cell" data-i="207"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 10 Spalte 10"></div>
+<div class="cell" data-i="208"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 10 Spalte 11"></div>
+<div class="cell" data-i="209"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 10 Spalte 12"></div>
+<div class="cell" data-i="210"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 10 Spalte 13"></div>
+<div class="cell sol" data-i="211"><span class="sn">24</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 10 Spalte 14"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="216"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 10 Spalte 19"></div>
+<div class="blank"></div>
+<div class="cell sol" data-i="218"><span class="sn">22</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 10 Spalte 21"></div>
+<div class="blank"></div>
+<div class="cell" data-i="220"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 11 Spalte 1"></div>
+<div class="blank"></div>
+<div class="cell" data-i="222"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 11 Spalte 3"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="228"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 11 Spalte 9"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="231"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 11 Spalte 12"></div>
+<div class="blank"></div>
+<div class="cell" data-i="233"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 11 Spalte 14"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="238"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 11 Spalte 19"></div>
+<div class="blank"></div>
+<div class="cell sol" data-i="240"><span class="sn">5</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 11 Spalte 21"></div>
+<div class="blank"></div>
+<div class="cell" data-i="242"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 12 Spalte 1"></div>
+<div class="blank"></div>
+<div class="cell" data-i="244"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 12 Spalte 3"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="250"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 12 Spalte 9"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell sol" data-i="253"><span class="sn">6</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 12 Spalte 12"></div>
+<div class="blank"></div>
+<div class="cell" data-i="255"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 12 Spalte 14"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="258"><span class="cn">13</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 12 Spalte 17"></div>
+<div class="cell" data-i="259"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 12 Spalte 18"></div>
+<div class="cell" data-i="260"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 12 Spalte 19"></div>
+<div class="cell" data-i="261"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 12 Spalte 20"></div>
+<div class="cell" data-i="262"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 12 Spalte 21"></div>
+<div class="cell" data-i="263"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 12 Spalte 22"></div>
+<div class="cell" data-i="264"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 13 Spalte 1"></div>
+<div class="blank"></div>
+<div class="cell" data-i="266"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 13 Spalte 3"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="272"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 13 Spalte 9"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="275"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 13 Spalte 12"></div>
+<div class="blank"></div>
+<div class="cell" data-i="277"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 13 Spalte 14"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="284"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 13 Spalte 21"></div>
+<div class="blank"></div>
+<div class="cell" data-i="286"><span class="cn">14</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 14 Spalte 1"></div>
+<div class="cell" data-i="287"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 14 Spalte 2"></div>
+<div class="cell sol" data-i="288"><span class="sn">16</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 14 Spalte 3"></div>
+<div class="cell" data-i="289"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 14 Spalte 4"></div>
+<div class="cell" data-i="290"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 14 Spalte 5"></div>
+<div class="cell" data-i="291"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 14 Spalte 6"></div>
+<div class="cell" data-i="292"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 14 Spalte 7"></div>
+<div class="cell" data-i="293"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 14 Spalte 8"></div>
+<div class="cell" data-i="294"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 14 Spalte 9"></div>
+<div class="cell" data-i="295"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 14 Spalte 10"></div>
+<div class="cell" data-i="296"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 14 Spalte 11"></div>
+<div class="cell" data-i="297"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 14 Spalte 12"></div>
+<div class="blank"></div>
+<div class="cell" data-i="299"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 14 Spalte 14"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="308"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 15 Spalte 1"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell sol" data-i="316"><span class="sn">19</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 15 Spalte 9"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell sol" data-i="321"><span class="sn">23</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 15 Spalte 14"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="330"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 16 Spalte 1"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="333"><span class="cn">15</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 16 Spalte 4"></div>
+<div class="cell" data-i="334"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 16 Spalte 5"></div>
+<div class="cell" data-i="335"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 16 Spalte 6"></div>
+<div class="cell" data-i="336"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 16 Spalte 7"></div>
+<div class="cell" data-i="337"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 16 Spalte 8"></div>
+<div class="cell" data-i="338"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 16 Spalte 9"></div>
+<div class="cell" data-i="339"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 16 Spalte 10"></div>
+<div class="cell" data-i="340"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 16 Spalte 11"></div>
+<div class="cell" data-i="341"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 16 Spalte 12"></div>
+<div class="cell" data-i="342"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 16 Spalte 13"></div>
+<div class="cell" data-i="343"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 16 Spalte 14"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="352"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 17 Spalte 1"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="360"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 17 Spalte 9"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="365"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 17 Spalte 14"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell sol" data-i="374"><span class="sn">7</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 18 Spalte 1"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="381"><span class="cn">16</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 18 Spalte 8"></div>
+<div class="cell" data-i="382"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 18 Spalte 9"></div>
+<div class="cell" data-i="383"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 18 Spalte 10"></div>
+<div class="cell sol" data-i="384"><span class="sn">4</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 18 Spalte 11"></div>
+<div class="cell" data-i="385"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 18 Spalte 12"></div>
+<div class="cell" data-i="386"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 18 Spalte 13"></div>
+<div class="cell" data-i="387"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 18 Spalte 14"></div>
+<div class="cell" data-i="388"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 18 Spalte 15"></div>
+<div class="cell sol" data-i="389"><span class="sn">20</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 18 Spalte 16"></div>
+<div class="cell" data-i="390"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 18 Spalte 17"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="396"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 19 Spalte 1"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="404"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 19 Spalte 9"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="409"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 19 Spalte 14"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="418"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 20 Spalte 1"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="431"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 20 Spalte 14"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="440"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 21 Spalte 1"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell" data-i="450"><span class="cn">17</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 21 Spalte 11"></div>
+<div class="cell" data-i="451"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 21 Spalte 12"></div>
+<div class="cell" data-i="452"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 21 Spalte 13"></div>
+<div class="cell" data-i="453"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 21 Spalte 14"></div>
+<div class="cell" data-i="454"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 21 Spalte 15"></div>
+<div class="cell" data-i="455"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 21 Spalte 16"></div>
+<div class="cell" data-i="456"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 21 Spalte 17"></div>
+<div class="cell" data-i="457"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 21 Spalte 18"></div>
+<div class="cell" data-i="458"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 21 Spalte 19"></div>
+<div class="cell" data-i="459"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 21 Spalte 20"></div>
+<div class="cell" data-i="460"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 21 Spalte 21"></div>
+<div class="blank"></div>
+<div class="cell" data-i="462"><span class="cn">18</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 22 Spalte 1"></div>
+<div class="cell" data-i="463"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 22 Spalte 2"></div>
+<div class="cell sol" data-i="464"><span class="sn">26</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 22 Spalte 3"></div>
+<div class="cell" data-i="465"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 22 Spalte 4"></div>
+<div class="cell" data-i="466"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 22 Spalte 5"></div>
+<div class="cell" data-i="467"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 22 Spalte 6"></div>
+<div class="cell sol" data-i="468"><span class="sn">11</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 22 Spalte 7"></div>
+<div class="cell" data-i="469"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 22 Spalte 8"></div>
+<div class="cell" data-i="470"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 22 Spalte 9"></div>
+<div class="cell" data-i="471"><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 22 Spalte 10"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="cell sol" data-i="475"><span class="sn">17</span><input autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Feld Zeile 22 Spalte 14"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+<div class="blank"></div>
+        </div>
+      </div>
+
+      <div class="solution" id="solution">
+        <h3>Lösungswort</h3>
+        <div class="srow"><span class="sgroup"><span class="sbox"><span class="sbn">1</span><span class="sbl" data-s="0"></span></span><span class="sbox"><span class="sbn">2</span><span class="sbl" data-s="1"></span></span><span class="sbox"><span class="sbn">3</span><span class="sbl" data-s="2"></span></span><span class="sbox"><span class="sbn">4</span><span class="sbl" data-s="3"></span></span><span class="sbox"><span class="sbn">5</span><span class="sbl" data-s="4"></span></span><span class="sbox"><span class="sbn">6</span><span class="sbl" data-s="5"></span></span><span class="sbox"><span class="sbn">7</span><span class="sbl" data-s="6"></span></span><span class="sbox"><span class="sbn">8</span><span class="sbl" data-s="7"></span></span><span class="sbox"><span class="sbn">9</span><span class="sbl" data-s="8"></span></span><span class="sbox"><span class="sbn">10</span><span class="sbl" data-s="9"></span></span><span class="sbox"><span class="sbn">11</span><span class="sbl" data-s="10"></span></span><span class="sbox"><span class="sbn">12</span><span class="sbl" data-s="11"></span></span><span class="sbox"><span class="sbn">13</span><span class="sbl" data-s="12"></span></span><span class="sbox"><span class="sbn">14</span><span class="sbl" data-s="13"></span></span><span class="sbox"><span class="sbn">15</span><span class="sbl" data-s="14"></span></span><span class="sbox"><span class="sbn">16</span><span class="sbl" data-s="15"></span></span><span class="sbox"><span class="sbn">17</span><span class="sbl" data-s="16"></span></span><span class="sbox"><span class="sbn">18</span><span class="sbl" data-s="17"></span></span><span class="sbox"><span class="sbn">19</span><span class="sbl" data-s="18"></span></span><span class="sbox"><span class="sbn">20</span><span class="sbl" data-s="19"></span></span><span class="sbox"><span class="sbn">21</span><span class="sbl" data-s="20"></span></span></span><span class="sgroup"><span class="sbox"><span class="sbn">22</span><span class="sbl" data-s="21"></span></span><span class="sbox"><span class="sbn">23</span><span class="sbl" data-s="22"></span></span><span class="sbox"><span class="sbn">24</span><span class="sbl" data-s="23"></span></span><span class="sbox"><span class="sbn">25</span><span class="sbl" data-s="24"></span></span><span class="sbox"><span class="sbn">26</span><span class="sbl" data-s="25"></span></span></span></div>
+      </div>
+
+      <div class="clues">
+        <div>
+          <h3>Waagerecht</h3>
+          <ol id="clA">
+<li data-k="A1"><span class="ln">1</span><span>Wofür T<sub>a</sub> auf dem Typenschild steht <span class="len">(19)</span></span></li>
+<li data-k="A4"><span class="ln">4</span><span>Bedeutung der ersten Kennziffer 5 <span class="len">(15)</span></span></li>
+<li data-k="A8"><span class="ln">8</span><span>Gegen feste … schützt die erste Kennziffer <span class="len">(12)</span></span></li>
+<li data-k="A9"><span class="ln">9</span><span>Zusatzbuchstabe A: Schutz gegen Zugang mit dem … <span class="len">(11)</span></span></li>
+<li data-k="A12"><span class="ln">12</span><span>Oberbegriff für das, was der IP-Code angibt <span class="len">(9)</span></span></li>
+<li data-k="A13"><span class="ln">13</span><span>Zusatzbuchstabe B: Schutz gegen Zugang mit dem … <span class="len">(6)</span></span></li>
+<li data-k="A14"><span class="ln">14</span><span>Dagegen schützt die zweite Kennziffer 4 <span class="len">(12)</span></span></li>
+<li data-k="A15"><span class="ln">15</span><span>Das X im IP-Code ist ein … <span class="len">(11)</span></span></li>
+<li data-k="A16"><span class="ln">16</span><span>Bedeutung der ersten Kennziffer 6 <span class="len">(10)</span></span></li>
+<li data-k="A17"><span class="ln">17</span><span>Hier stehen am Gerät die Schutzart und weitere Angaben wie Hersteller, Nennspannung und Leistung <span class="len">(11)</span></span></li>
+<li data-k="A18"><span class="ln">18</span><span>Dort findest du beim Hersteller die Schutzart und weitere wichtige technische Angaben eines Geräts <span class="len">(10)</span></span></li>
+          </ol>
+        </div>
+        <div>
+          <h3>Senkrecht</h3>
+          <ol id="clD">
+<li data-k="D2"><span class="ln">2</span><span>Zweite Kennziffer 7: Schutz beim zeitweiligen … <span class="len">(12)</span></span></li>
+<li data-k="D3"><span class="ln">3</span><span>Dagegen schützt die zweite Kennziffer 5 <span class="len">(12)</span></span></li>
+<li data-k="D5"><span class="ln">5</span><span>Gibt die erste Kennziffer neben dem Schutz gegen Fremdkörper an <span class="len">(17)</span></span></li>
+<li data-k="D6"><span class="ln">6</span><span>Dagegen schützt die zweite Kennziffer 3 <span class="len">(12)</span></span></li>
+<li data-k="D7"><span class="ln">7</span><span>Der IP-Code enthält zwei davon <span class="len">(10)</span></span></li>
+<li data-k="D10"><span class="ln">10</span><span>Abstand, der zwischen Scheinwerfer und angestrahlten Gegenständen mindestens eingehalten werden muss <span class="len">(14)</span></span></li>
+<li data-k="D11"><span class="ln">11</span><span>Bauteil für Strom und Daten, bei dem der Zusatz TOP die Eignung für den Außeneinsatz kennzeichnet <span class="len">(14)</span></span></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <button type="button" id="check">Prüfen</button>
+        <span class="status" id="status" aria-live="polite"></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="tools">
+    <button type="button" id="print">Drucken oder als PDF sichern</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var W = 22;
+  var WORDS = [{"n": 1, "d": "A", "len": 19, "cells": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], "h": 1934918773}, {"n": 4, "d": "A", "len": 15, "cells": [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62], "h": 2447539100}, {"n": 8, "d": "A", "len": 12, "cells": [98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109], "h": 353061211}, {"n": 9, "d": "A", "len": 11, "cells": [134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144], "h": 1856849081}, {"n": 12, "d": "A", "len": 9, "cells": [203, 204, 205, 206, 207, 208, 209, 210, 211], "h": 916678675}, {"n": 13, "d": "A", "len": 6, "cells": [258, 259, 260, 261, 262, 263], "h": 2085624860}, {"n": 14, "d": "A", "len": 12, "cells": [286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297], "h": 3855272572}, {"n": 15, "d": "A", "len": 11, "cells": [333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343], "h": 2862255966}, {"n": 16, "d": "A", "len": 10, "cells": [381, 382, 383, 384, 385, 386, 387, 388, 389, 390], "h": 1594946218}, {"n": 17, "d": "A", "len": 11, "cells": [450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460], "h": 2557582108}, {"n": 18, "d": "A", "len": 10, "cells": [462, 463, 464, 465, 466, 467, 468, 469, 470, 471], "h": 2736513966}, {"n": 2, "d": "D", "len": 12, "cells": [18, 40, 62, 84, 106, 128, 150, 172, 194, 216, 238, 260], "h": 1954771161}, {"n": 3, "d": "D", "len": 12, "cells": [46, 68, 90, 112, 134, 156, 178, 200, 222, 244, 266, 288], "h": 4010941394}, {"n": 5, "d": "D", "len": 17, "cells": [52, 74, 96, 118, 140, 162, 184, 206, 228, 250, 272, 294, 316, 338, 360, 382, 404], "h": 4215563320}, {"n": 6, "d": "D", "len": 12, "cells": [55, 77, 99, 121, 143, 165, 187, 209, 231, 253, 275, 297], "h": 1730398835}, {"n": 7, "d": "D", "len": 10, "cells": [86, 108, 130, 152, 174, 196, 218, 240, 262, 284], "h": 1917549951}, {"n": 10, "d": "D", "len": 14, "cells": [176, 198, 220, 242, 264, 286, 308, 330, 352, 374, 396, 418, 440, 462], "h": 2151132668}, {"n": 11, "d": "D", "len": 14, "cells": [189, 211, 233, 255, 277, 299, 321, 343, 365, 387, 409, 431, 453, 475], "h": 2835295008}];
+  var TOTAL = 18;
+  var SOL = [5, 100, 109, 384, 240, 253, 374, 141, 205, 172, 468, 51, 136, 68, 14, 288, 475, 198, 316, 389, 10, 218, 321, 211, 61, 464];
+  var solEls = document.querySelectorAll('.sbl');
+  var solBox = document.getElementById('solution');
+  function updateSol(){
+    SOL.forEach(function(ci, k){ solEls[k].textContent = inp(ci).value; });
+    solBox.classList.remove('done');
+  }
+  var ORDER = WORDS.slice().sort(function(a,b){ return a.n - b.n; });
+
+  var cellEls = {};
+  document.querySelectorAll('.cell').forEach(function(el){
+    cellEls[+el.dataset.i] = el;
+  });
+  function inp(i){ return cellEls[i].querySelector('input'); }
+
+  var byCell = {};
+  WORDS.forEach(function(w){
+    w.cells.forEach(function(i){ (byCell[i] = byCell[i] || {})[w.d] = w; });
+  });
+  var startOf = {};
+  WORDS.forEach(function(w){ startOf[w.cells[0]] = w; });
+  function clueEl(w){ return document.querySelector('.clues li[data-k="' + w.d + w.n + '"]'); }
+
+  var cur = null, dir = 'A';
+
+  function highlight(){
+    document.querySelectorAll('.cell.word,.cell.cur').forEach(function(e){ e.classList.remove('word','cur'); });
+    document.querySelectorAll('.clues li.act').forEach(function(e){ e.classList.remove('act'); });
+    if (cur === null) return;
+    var w = byCell[cur][dir];
+    if (w){
+      w.cells.forEach(function(i){ cellEls[i].classList.add('word'); });
+      clueEl(w).classList.add('act');
+    }
+    cellEls[cur].classList.add('cur');
+  }
+
+  function focusCell(i){
+    cur = i;
+    if (!byCell[i][dir]) dir = dir === 'A' ? 'D' : 'A';
+    inp(i).focus();
+    highlight();
+  }
+
+  function step(delta){
+    var w = byCell[cur][dir];
+    if (!w) return;
+    var k = w.cells.indexOf(cur) + delta;
+    if (k >= 0 && k < w.cells.length) focusCell(w.cells[k]);
+  }
+
+  var status = document.getElementById('status');
+  function say(t, cls){ status.textContent = t; status.className = 'status' + (cls ? ' ' + cls : ''); }
+
+  function gotoWord(w){
+    dir = w.d;
+    focusCell(w.cells[0]);
+  }
+
+  function clearMark(i){
+    updateSol();
+    cellEls[i].classList.remove('ok','bad');
+    ['A','D'].forEach(function(d){
+      var w = byCell[i][d];
+      if (w){ var li = clueEl(w); li.classList.remove('ok','bad'); }
+    });
+  }
+
+  Object.keys(cellEls).forEach(function(k){
+    var i = +k, el = inp(i);
+    el.addEventListener('mousedown', function(e){
+      if (cur === i && byCell[i].A && byCell[i].D){
+        dir = dir === 'A' ? 'D' : 'A';
+        highlight();
+        e.preventDefault();
+      }
+    });
+    el.addEventListener('focus', function(){
+      if (cur !== i){
+        cur = i;
+        if (startOf[i]) dir = startOf[i].d;
+        else if (!byCell[i][dir]) dir = dir === 'A' ? 'D' : 'A';
+        highlight();
+      }
+    });
+    var last = '';
+    function write(ch){
+      ch = ch.toUpperCase();
+      if (/[ÄÖÜß]/.test(ch)){
+        el.value = last;
+        say('Umlaute bitte als AE, OE und UE schreiben, ß als SS.', 'warn');
+        return;
+      }
+      if (!/^[A-Z]$/.test(ch)){ el.value = last; return; }
+      el.value = last = ch;
+      clearMark(i);
+      step(1);
+    }
+    el.addEventListener('input', function(){
+      var v = el.value;
+      if (!v){ last = ''; clearMark(i); return; }
+      write(v.slice(-1));
+    });
+    el.addEventListener('keydown', function(e){
+      var key = e.key;
+      if (key === 'Tab'){
+        var here = byCell[i][dir];
+        var k = ORDER.indexOf(here) + (e.shiftKey ? -1 : 1);
+        if (k >= 0 && k < ORDER.length){ e.preventDefault(); gotoWord(ORDER[k]); }
+        else if (k < 0){ e.preventDefault(); }
+        return;
+      }
+      if (key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey){
+        e.preventDefault();
+        write(key);
+      } else if (key === 'Backspace'){
+        e.preventDefault();
+        if (el.value){ el.value = last = ''; clearMark(i); }
+        else { step(-1); var j = cur; if (j !== i && inp(j).value){ inp(j).value = ''; inp(j).dispatchEvent(new Event('input')); } }
+      } else if (key === 'Delete'){
+        e.preventDefault(); el.value = last = ''; clearMark(i);
+      } else if (key.indexOf('Arrow') === 0){
+        e.preventDefault();
+        var r = Math.floor(i / W), c = i % W;
+        var nd = (key === 'ArrowLeft' || key === 'ArrowRight') ? 'A' : 'D';
+        if (nd !== dir && byCell[i][nd]){ dir = nd; highlight(); return; }
+        var dr = key === 'ArrowUp' ? -1 : key === 'ArrowDown' ? 1 : 0;
+        var dc = key === 'ArrowLeft' ? -1 : key === 'ArrowRight' ? 1 : 0;
+        var n = (r + dr) * W + (c + dc);
+        if (c + dc >= 0 && c + dc < W && cellEls[n]) focusCell(n);
+      } else if (key === 'Enter'){
+        e.preventDefault();
+        if (byCell[i].A && byCell[i].D){ dir = dir === 'A' ? 'D' : 'A'; highlight(); }
+      }
+    });
+  });
+
+  Object.keys(cellEls).forEach(function(k){ inp(+k).tabIndex = -1; });
+  inp(ORDER[0].cells[0]).tabIndex = 0;
+
+  document.querySelectorAll('.clues li').forEach(function(li){
+    li.addEventListener('click', function(){
+      var k = li.dataset.k, d = k[0], n = +k.slice(1);
+      var w = WORDS.filter(function(x){ return x.d === d && x.n === n; })[0];
+      dir = d;
+      var first = w.cells.filter(function(i){ return !inp(i).value; })[0];
+      focusCell(first !== undefined ? first : w.cells[0]);
+    });
+  });
+
+  function fnv(t){
+    var h = 0x811c9dc5;
+    for (var k = 0; k < t.length; k++){
+      h ^= t.charCodeAt(k);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h >>> 0;
+  }
+
+  document.getElementById('check').addEventListener('click', function(){
+    document.querySelectorAll('.cell.ok,.cell.bad').forEach(function(e){ e.classList.remove('ok','bad'); });
+    document.querySelectorAll('.clues li.ok,.clues li.bad').forEach(function(e){ e.classList.remove('ok','bad'); });
+    var right = 0, open = 0;
+    var okCells = {};
+    WORDS.forEach(function(w){
+      var t = w.cells.map(function(i){ return inp(i).value; }).join('');
+      if (t.length < w.len){ open++; return; }
+      if (fnv(t) === w.h){
+        right++;
+        w.cells.forEach(function(i){ okCells[i] = true; });
+        clueEl(w).classList.add('ok');
+      } else {
+        clueEl(w).classList.add('bad');
+        w.cells.forEach(function(i){ cellEls[i].classList.add('bad'); });
+      }
+    });
+    Object.keys(okCells).forEach(function(i){
+      cellEls[i].classList.remove('bad');
+      cellEls[i].classList.add('ok');
+    });
+    if (right === TOTAL) solBox.classList.add('done');
+    if (right === TOTAL) say('Alle ' + TOTAL + ' Begriffe sind richtig.', 'done');
+    else say(right + ' von ' + TOTAL + ' Begriffen richtig' + (open ? ', ' + open + ' noch nicht vollständig ausgefüllt.' : '.'));
+  });
+
+  document.getElementById('print').addEventListener('click', function(){ window.print(); });
+
+  window.addEventListener('beforeunload', function(e){
+    var written = Object.keys(cellEls).some(function(i){ return inp(i).value; });
+    if (written){ e.preventDefault(); e.returnValue = ''; }
+  });
+})();
+</script>
+
+</body>
+</html>
