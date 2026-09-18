@@ -45,6 +45,9 @@ button{
 }
 button:hover{background:#003A78;border-color:#003A78}
 button:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.tools button + button{margin-left:10px}
+button.ghost{background:#fff;color:var(--blau)}
+button.ghost:hover{background:var(--blau-hell);border-color:var(--blau);color:var(--blau)}
 
 .head{background:#fff;border:1px solid var(--line);margin-bottom:20px}
 .head-bar{
@@ -194,8 +197,8 @@ h1{font-size:clamp(22px,3.4vw,30px);font-weight:700;line-height:1.15;margin:0 0 
   </div>
 
   <div class="notice" role="note">
-    <b>Deine Eingaben werden nicht gespeichert.</b>
-    Alles, was du hier hineinschreibst, liegt nur im Browserfenster. Sobald du die Seite neu lädst oder schließt, ist es weg. Sichere deine Antworten über die Schaltfläche am Ende des Blattes.
+    <b>Deine Eingaben bleiben nur auf diesem Gerät.</b>
+    Sie werden im Browser gespeichert und sind nach dem Neuladen noch da. An einem anderen Rechner, in einem privaten Fenster oder nach dem Löschen der Browserdaten sind sie weg. Sichere deine Antworten am Ende des Blattes als Ausdruck oder PDF.
   </div>
 
   <section class="task">
@@ -735,6 +738,7 @@ h1{font-size:clamp(22px,3.4vw,30px);font-weight:700;line-height:1.15;margin:0 0 
 
   <div class="tools">
     <button type="button" id="print">Drucken oder als PDF sichern</button>
+    <button type="button" id="wipe" class="ghost">Alle Eingaben löschen</button>
   </div>
 
 </div>
@@ -931,12 +935,69 @@ h1{font-size:clamp(22px,3.4vw,30px);font-weight:700;line-height:1.15;margin:0 0 
 
   document.getElementById('print').addEventListener('click', function(){ window.print(); });
 
-  window.addEventListener('beforeunload', function(e){
-    var written = Object.keys(cellEls).some(function(i){ return inp(i).value; });
-    if (written){ e.preventDefault(); e.returnValue = ''; }
-  });
 })();
 </script>
 
+
+<script>
+(function(){
+  var PREFIX = 'vt-schutzarten-kwr:';
+  var store = null;
+  try { store = window.localStorage; store.setItem(PREFIX + '__t', '1'); store.removeItem(PREFIX + '__t'); }
+  catch (e) { store = null; }
+  if (!store) return;
+
+  var fields = [];
+  document.querySelectorAll('[data-k]').forEach(function(el){
+    fields.push({ el: el, key: PREFIX + el.getAttribute('data-k'), rich: el.isContentEditable });
+  });
+  document.querySelectorAll('.cell[data-i] input').forEach(function(el){
+    fields.push({ el: el, key: PREFIX + 'c' + el.parentElement.getAttribute('data-i'), rich: false });
+  });
+
+  fields.forEach(function(f){
+    var saved = null;
+    try { saved = store.getItem(f.key); } catch (e) {}
+    if (saved === null) { return; }
+    if (f.rich) { f.el.textContent = saved; } else { f.el.value = saved; }
+  });
+
+  var timer = null;
+  function save(){
+    fields.forEach(function(f){
+      var val = f.rich ? f.el.textContent : f.el.value;
+      try {
+        if (val && val.trim()) { store.setItem(f.key, val); } else { store.removeItem(f.key); }
+      } catch (e) {}
+    });
+  }
+  function queue(){
+    if (timer) { clearTimeout(timer); }
+    timer = setTimeout(save, 400);
+  }
+  document.addEventListener('input', queue, true);
+  document.addEventListener('change', queue, true);
+  window.addEventListener('pagehide', save);
+
+  var wipe = document.getElementById('wipe');
+  if (wipe) {
+    wipe.addEventListener('click', function(){
+      if (!window.confirm('Wirklich alle Eingaben auf diesem Blatt loeschen?')) { return; }
+      fields.forEach(function(f){
+        try { store.removeItem(f.key); } catch (e) {}
+        if (f.rich) { f.el.textContent = ''; } else { f.el.value = ''; }
+      });
+      document.querySelectorAll('.cell').forEach(function(c){
+        c.classList.remove('ok','bad','done');
+      });
+      document.querySelectorAll('.clues li').forEach(function(li){
+        li.classList.remove('ok','bad','done');
+      });
+      var status = document.getElementById('status');
+      if (status) { status.textContent = ''; }
+    });
+  }
+})();
+</script>
 </body>
 </html>
